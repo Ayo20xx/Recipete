@@ -1,1 +1,7 @@
-class 
+
+
+
+
+class Authentication:
+
+    async def register()
