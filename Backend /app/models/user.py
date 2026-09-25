@@ -1,5 +1,5 @@
-from datetime import datetime,timezone  # noqa: N999
-from uuid import UUID,uuid4
+from datetime import datetime, timezone  # noqa: N999
+from uuid import UUID, uuid4
 
 from sqlmodel import Field, SQLModel
 
