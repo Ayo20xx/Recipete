@@ -4,4 +4,5 @@
 
 class Authentication:
 
-    async def register()
+    async def register():
+        pass
