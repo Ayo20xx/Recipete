@@ -10,3 +10,4 @@ __pycache__/
 .venv/
 app.db
 alembic/env.py
+.DS_Store

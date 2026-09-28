@@ -1,6 +1,7 @@
 """Async database engine and session configuration."""
 
 from collections.abc import AsyncGenerator
+from typing import Annotated
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -28,3 +29,5 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
     async with AsyncSessionLocal() as db:
         yield db
+
+Sessiondep= Annotated[AsyncSession,get_db]

@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import exists, select
 
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password, verify_password,encode_jwt
 from app.models.user import User
 from app.schemas.user import UserCreate
 
@@ -46,4 +46,5 @@ class Authentication:
        user=get_user_by_email(input.email)
        if user is None or verify_password(input.password,user.password_hash) is False:
            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND ,details="Incorrect email or password.")
-       
+       jwt=encode_jwt(user.id)
+       return{"message": "login successfully","jwt":jwt}

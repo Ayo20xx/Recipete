@@ -6,10 +6,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Runtime configuration loaded from environment variables."""
 
-    app_name: str = "Recipe API"
-    environment: str = "development"
+    app_name: str 
+    environment: str 
     debug: bool = False
-    database_url: str = "sqlite+aiosqlite:///./app.db"
+    database_url: str 
+    secret: str 
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -19,3 +20,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
