@@ -5,12 +5,12 @@ from app.models.user import User
 from app.schemas.user import UserCreate
 from app.services.auth import Authentication
 
-router = APIRouter()
+user_router = APIRouter()
 
-@router.post("/register")
+@user_router.post("/register")
 async def registration(input:UserCreate,session:get_db ):
     return await Authentication.register(input,session)
-@router.post("/login")
+@user_router.post("/login")
 async def login(input:UserCreate,session:get_db):
     return await Authentication.login(input,session)
 
