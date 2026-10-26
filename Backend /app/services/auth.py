@@ -11,7 +11,7 @@ async def is_exists(
     session: AsyncSession,
     email: str
 ) -> bool:
-    statement = select(exists().where(User.email == email))  # noqa: F823
+    statement = select(exists().where(User.email == email))  
 
     user_exists = await session.scalar(statement)
 
@@ -40,7 +40,7 @@ class Authentication:
         session.add(new_User)
         await session.commit()
         await session.refresh(new_User)
-        return {"message":"succesfully registered"}
+        return {"message":"successfully registered"}
 
     async def login(input:UserCreate,session: AsyncSession):
        user=await get_user_by_email(input.email)
