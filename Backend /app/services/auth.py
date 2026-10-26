@@ -13,9 +13,9 @@ async def is_exists(
 ) -> bool:
     statement = select(exists().where(User.email == email))  # noqa: F823
 
-    exists = await session.scalar(statement)
+    user_exists = await session.scalar(statement)
 
-    return exists
+    return user_exists
 
 
 async def get_user_by_email(email:str,session:AsyncSession):
@@ -30,7 +30,7 @@ async def get_user_by_email(email:str,session:AsyncSession):
 class Authentication:
 
     async def register(input:UserCreate,session: AsyncSession ):
-        if await is_exists(User,input.email):
+        if await is_exists(session,input.email):
             raise HTTPException (status_code=status.HTTP_409_CONFLICT,detail="this email already exists")
         pwd_hash= hash_password(input.password)
         new_User = User(
