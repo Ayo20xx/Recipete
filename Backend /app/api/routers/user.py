@@ -1,8 +1,7 @@
 from fastapi import APIRouter, status
 
-from app.api.deps import SessionDep
-from app.models.user import User
-from app.schemas.user import UserCreate
+from app.api.deps import CurrentUserDep, SessionDep
+from app.schemas.user import UserCreate, UserRead
 from app.services.auth import Authentication
 
 user_router = APIRouter()
@@ -14,4 +13,7 @@ async def registration(input:UserCreate,session:SessionDep ):
 async def login(input:UserCreate,session:SessionDep):
     return await Authentication.login(input,session)
 
-    
+
+@user_router.get("/me", response_model=UserRead)
+async def me(current_user: CurrentUserDep):
+    return current_user

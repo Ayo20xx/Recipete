@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import exists, select
 
@@ -21,8 +22,8 @@ async def is_exists(
 async def get_user_by_email(email:str,session:AsyncSession):
     statement=select(User).where(User.email == email)
 
-    result=await(session.execute(statement)).scalar_one_or_none()
-    return result
+    result = await session.execute(statement)
+    return result.scalar_one_or_none()
 
 
 
@@ -37,14 +38,29 @@ class Authentication:
             email= input.email,
             password_hash= pwd_hash
         )
-        session.add(new_User)
-        await session.commit()
+        try:
+            session.add(new_User)
+            await session.commit()
+        except IntegrityError:
+            await session.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="this email already exists",
+            )
+
         await session.refresh(new_User)
         return {"message":"successfully registered"}
 
     async def login(input:UserCreate,session: AsyncSession):
-       user=await get_user_by_email(input.email)
-       if user is None or verify_password(input.password,user.password_hash) is False:
-           raise HTTPException(status_code=status.HTTP_404_NOT_FOUND ,details="Incorrect email or password.")
+       user=await get_user_by_email(input.email, session)
+       if (
+           user is None
+           or user.password_hash is None
+           or not verify_password(input.password, user.password_hash)
+       ):
+           raise HTTPException(
+               status_code=status.HTTP_401_UNAUTHORIZED,
+               detail="Incorrect email or password.",
+           )
        jwt=encode_jwt(user.id)
-       return{"message": "login successfully","jwt":jwt}
+       return {"access_token": jwt, "token_type": "bearer"}
