@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     debug: bool = False
     database_url: str 
     secret: str 
+    google_web_client_id: str | None = None
+    mealdb_api_key: str | None = None
 
     @field_validator("secret")
     @classmethod

@@ -11,3 +11,4 @@ __pycache__/
 app.db
 alembic/env.py
 .DS_Store
+GOOGLE_AUTH_DECISIONS.txt

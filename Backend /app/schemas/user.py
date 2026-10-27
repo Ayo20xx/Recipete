@@ -22,3 +22,7 @@ class UserRead(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GoogleTokenRequest(BaseModel):
+    id_token: str = Field(min_length=1)
