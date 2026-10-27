@@ -12,3 +12,5 @@ app.db
 alembic/env.py
 .DS_Store
 GOOGLE_AUTH_DECISIONS.txt
+RECIPE_API_INTEGRATION.txt
+experiment.py

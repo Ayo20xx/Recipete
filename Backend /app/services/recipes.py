@@ -72,7 +72,7 @@ async def search_recipes(
     }
     if len(selected_filters) != 1:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Provide exactly one of query, ingredient, category, or area",
         )
 
