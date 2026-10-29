@@ -58,7 +58,7 @@ async def read_all_notifications(
     session: SessionDep,
 ):
     await mark_all_notifications_read(session, current_user)
-    return None
+    
 
 
 @user_router.post(
