@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     secret: str 
     google_web_client_id: str | None = None
     mealdb_api_key: str | None = None
+    cors_origins: str = ""
 
     @field_validator("secret")
     @classmethod

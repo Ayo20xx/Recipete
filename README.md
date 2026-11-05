@@ -33,12 +33,11 @@ SECRET=replace-this-with-at-least-32-random-bytes
 # MEALDB_API_KEY=
 ```
 
-Start the API from the repository root. The backend package currently lives in
-the `Backend ` directory (including the trailing space), so add it to
+Start the API from the repository root, adding the backend package to
 `PYTHONPATH`:
 
 ```bash
-PYTHONPATH="Backend " uvicorn app.main:app --reload
+PYTHONPATH=backend uvicorn app.main:app --reload
 ```
 
 The interactive API documentation is available at
@@ -51,7 +50,7 @@ With the same environment variables configured in `.env`, apply migrations
 from the repository root:
 
 ```bash
-PYTHONPATH="Backend " alembic upgrade head
+PYTHONPATH=backend alembic upgrade head
 ```
 
 ## Tests
@@ -59,7 +58,7 @@ PYTHONPATH="Backend " alembic upgrade head
 The API tests use Python's built-in `unittest` runner and FastAPI's test client:
 
 ```bash
-PYTHONPATH="Backend " python -m unittest discover -s tests -v
+PYTHONPATH=backend python -m unittest discover -s tests -v
 ```
 
 ## Docker
@@ -96,3 +95,21 @@ docker run --rm \
 
 Do not use the example secret in production. Supply a securely generated value
 of at least 32 bytes.
+
+## Deploy to Render
+
+1. Push this repository to GitHub.
+2. In Render, choose **New → Blueprint**, connect the repository, and deploy
+   the included `render.yaml`.
+3. After the first deploy, copy the service URL from the Render dashboard. The
+   API docs are available at `<service-url>/docs`.
+4. To allow a browser frontend to call the API, add a `CORS_ORIGINS` environment
+   variable in Render with the frontend's exact origin, including scheme and
+   port if present. For multiple origins, separate them with commas.
+
+The Blueprint uses SQLite on Render's temporary filesystem for a quick demo.
+That database can be lost when the service restarts or redeploys. For persistent
+data, attach a Render persistent disk mounted at `/var/data`, then set
+`DATABASE_URL` to `sqlite+aiosqlite:////var/data/recipete.db`. Persistent disks
+require a paid Render service plan. The container applies Alembic migrations
+before starting the API.

@@ -14,7 +14,7 @@ os.environ.update(
         "SECRET": "test-secret-with-more-than-thirty-two-bytes",
     }
 )
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "Backend "))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.main import app
 

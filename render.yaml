@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: recipete-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /openapi.json
+    envVars:
+      - key: APP_NAME
+        value: Recipete API
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET
+        generateValue: true
+      - key: DATABASE_URL
+        value: sqlite+aiosqlite:///./app.db
