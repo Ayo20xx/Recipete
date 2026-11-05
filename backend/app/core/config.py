@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """Runtime configuration loaded from environment variables."""
 
-    app_name: str 
+    app_name: str = "Recipete"
     environment: str 
     debug: bool = False
     database_url: str 

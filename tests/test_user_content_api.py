@@ -2,6 +2,7 @@ import os
 import sys
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -17,6 +18,7 @@ os.environ.update(
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.main import app
+from app.core.config import Settings
 
 
 class RecipeApiSmokeTests(unittest.TestCase):
@@ -34,3 +36,17 @@ class RecipeApiSmokeTests(unittest.TestCase):
         response = self.client.get("/api/v1/recipes/search", params={"query": ""})
 
         self.assertEqual(response.status_code, 422)
+
+    def test_settings_default_app_name_when_environment_variable_is_missing(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "ENVIRONMENT": "test",
+                "DATABASE_URL": "sqlite+aiosqlite:///:memory:",
+                "SECRET": "test-secret-with-more-than-thirty-two-bytes",
+            },
+            clear=True,
+        ):
+            settings = Settings(_env_file=None)
+
+        self.assertEqual(settings.app_name, "Recipete")

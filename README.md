@@ -33,6 +33,9 @@ SECRET=replace-this-with-at-least-32-random-bytes
 # MEALDB_API_KEY=
 ```
 
+`APP_NAME` defaults to `Recipete`; `ENVIRONMENT`, `DATABASE_URL`, and `SECRET`
+must be configured.
+
 Start the API from the repository root, adding the backend package to
 `PYTHONPATH`:
 
