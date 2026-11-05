@@ -115,4 +115,5 @@ That database can be lost when the service restarts or redeploys. For persistent
 data, attach a Render persistent disk mounted at `/var/data`, then set
 `DATABASE_URL` to `sqlite+aiosqlite:////var/data/recipete.db`. Persistent disks
 require a paid Render service plan. The container applies Alembic migrations
-before starting the API.
+before starting the API. Render PostgreSQL connection URLs using `postgres://`
+or `postgresql://` are automatically configured with the async PostgreSQL driver.

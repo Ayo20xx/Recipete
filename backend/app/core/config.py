@@ -23,6 +23,17 @@ class Settings(BaseSettings):
             raise ValueError("SECRET must be at least 32 bytes")
         return value
 
+    @field_validator("database_url")
+    @classmethod
+    def normalize_database_url(cls, value: str) -> str:
+        if value.startswith("postgres://"):
+            return value.replace("postgres://", "postgresql+asyncpg://", 1)
+        if value.startswith("postgresql://"):
+            return value.replace("postgresql://", "postgresql+asyncpg://", 1)
+        if value.startswith("sqlite://"):
+            return value.replace("sqlite://", "sqlite+aiosqlite://", 1)
+        return value
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -1,8 +1,9 @@
+import asyncio
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy.engine import make_url
 from sqlalchemy import pool
+from sqlalchemy.engine import Connection, make_url
+from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
@@ -19,8 +20,6 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 database_url = make_url(settings.database_url)
-if database_url.get_backend_name() == "sqlite":
-    database_url = database_url.set(drivername="sqlite")
 config.set_main_option(
     "sqlalchemy.url",
     database_url.render_as_string(hide_password=False).replace("%", "%%"),
@@ -59,28 +58,34 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+def do_run_migrations(connection: Connection) -> None:
+    context.configure(
+        connection=connection,
+        target_metadata=target_metadata,
+        render_as_batch=True,
+    )
 
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
 
-    """
-    connectable = engine_from_config(
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_async_migrations() -> None:
+    connectable = async_engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata,
-            render_as_batch=True,
-        )
+    async with connectable.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+    await connectable.dispose()
 
-        with context.begin_transaction():
-            context.run_migrations()
+
+def run_migrations_online() -> None:
+    """Run migrations using the configured async database driver."""
+
+    asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():

@@ -50,3 +50,26 @@ class RecipeApiSmokeTests(unittest.TestCase):
             settings = Settings(_env_file=None)
 
         self.assertEqual(settings.app_name, "Recipete")
+
+    def test_settings_normalize_render_postgresql_urls_for_async_driver(self) -> None:
+        for database_url in (
+            "postgres://user:password@localhost/recipete",
+            "postgresql://user:password@localhost/recipete",
+        ):
+            with self.subTest(database_url=database_url.split(":", 1)[0]):
+                settings = Settings(
+                    app_name="Recipete",
+                    environment="test",
+                    database_url=database_url,
+                    secret="test-secret-with-more-than-thirty-two-bytes",
+                    _env_file=None,
+                )
+
+                self.assertEqual(
+                    settings.database_url,
+                    database_url.replace(
+                        database_url.split("://", 1)[0],
+                        "postgresql+asyncpg",
+                        1,
+                    ),
+                )
