@@ -47,6 +47,8 @@ The interactive API documentation is available at
 <http://127.0.0.1:8000/docs>, and the OpenAPI schema is at
 <http://127.0.0.1:8000/openapi.json>.
 
+For the mobile team's endpoint guide, see [MOBILE_API.md](./MOBILE_API.md).
+
 ## Database migrations
 
 With the same environment variables configured in `.env`, apply migrations

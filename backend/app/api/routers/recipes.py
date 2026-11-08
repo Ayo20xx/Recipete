@@ -23,7 +23,6 @@ from app.services.user_content import (
     update_recipe_review,
 )
 
-
 recipes_router = APIRouter(prefix="/recipes", tags=["recipes"])
 
 
