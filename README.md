@@ -49,6 +49,22 @@ The interactive API documentation is available at
 
 For the mobile team's endpoint guide, see [MOBILE_API.md](./MOBILE_API.md).
 
+## Mobile authentication
+
+`POST /api/v1/register` accepts `email`, `password`, and `name`. Registration,
+password login, and Google login return an access token and a refresh token.
+Send the access token as a bearer token for authenticated API requests.
+
+Access tokens expire after 15 minutes; refresh tokens expire after 30 days.
+Send the refresh token to
+`POST /api/v1/refresh` to rotate it and receive a new token pair. The old
+refresh token becomes invalid after use. Send it to `POST /api/v1/logout` to
+revoke it when signing out. Store refresh tokens in the mobile platform's
+secure storage.
+
+Recipe search/details, reviews, and notifications are registered as separate
+API route groups; existing review and notification URL paths remain unchanged.
+
 ## Database migrations
 
 With the same environment variables configured in `.env`, apply migrations
