@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class SavedRecipeRead(BaseModel):
@@ -39,9 +39,11 @@ class RecipeReviewList(BaseModel):
 class NotificationRead(BaseModel):
     id: UUID
     actor_user_id: UUID | None
-    review_id: UUID
-    provider: str
-    recipe_id: str
+    review_id: UUID | None
+    provider: str | None
+    recipe_id: str | None
+    title: str | None
+    message: str | None
     is_read: bool
     created_at: datetime
 
@@ -51,6 +53,23 @@ class NotificationRead(BaseModel):
 class NotificationInbox(BaseModel):
     notifications: list[NotificationRead]
     unread_count: int
+
+
+class NotificationBroadcastCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+    message: str = Field(min_length=1, max_length=1000)
+
+    @field_validator("title", "message")
+    @classmethod
+    def text_must_not_be_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("must not be blank")
+        return value
+
+
+class NotificationBroadcastResult(BaseModel):
+    recipient_count: int
 
 
 class RecipeSummary(BaseModel):

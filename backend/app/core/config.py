@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     database_url: str 
     secret: str 
     google_web_client_id: str | None = None
+    mealdb_url: str = "https://www.themealdb.com/api/json/v1"
     mealdb_api_key: str | None = None
     cors_origins: str = ""
 

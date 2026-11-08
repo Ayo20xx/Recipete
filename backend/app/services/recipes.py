@@ -6,9 +6,6 @@ from app.core.config import settings
 from app.schemas.recipe import RecipeDetails, RecipeIngredient, RecipeSummary
 
 
-BASE_URL = "https://www.themealdb.com/api/json/v1"
-
-
 async def _fetch_meals(endpoint: str, params: dict[str, str]) -> list[dict]:
     if settings.mealdb_api_key is None:
         raise HTTPException(
@@ -19,7 +16,10 @@ async def _fetch_meals(endpoint: str, params: dict[str, str]) -> list[dict]:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
-                f"{BASE_URL}/{settings.mealdb_api_key}/{endpoint}",
+                (
+                    f"{settings.mealdb_url.rstrip('/')}/"
+                    f"{settings.mealdb_api_key}/{endpoint}"
+                ),
                 params=params,
             )
         response.raise_for_status()
@@ -100,7 +100,20 @@ async def get_recipe_details(meal_id: str) -> RecipeDetails:
             detail="Recipe not found",
         )
 
-    meal = meals[0]
+    return _recipe_details_from_meal(meals[0])
+
+
+async def get_random_recipe() -> RecipeDetails:
+    meals = await _fetch_meals("random.php", {})
+    if not meals:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Recipe provider returned no random recipe",
+        )
+    return _recipe_details_from_meal(meals[0])
+
+
+def _recipe_details_from_meal(meal: dict) -> RecipeDetails:
     ingredients = []
     for index in range(1, 21):
         name = meal.get(f"strIngredient{index}")

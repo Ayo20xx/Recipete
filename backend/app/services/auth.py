@@ -1,18 +1,55 @@
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import exists, select
 
 from app.core.security import (
+    ACCESS_TOKEN_TTL_SECONDS,
+    create_refresh_token,
     encode_jwt,
     hash_password,
+    hash_refresh_token,
     verify_google_id_token,
     verify_password,
 )
+from app.models.refresh_token import RefreshToken
 from app.models.user import User
-from app.schemas.user import UserCreate
+from app.schemas.user import UserCreate, UserLogin
+
+REFRESH_TOKEN_TTL = timedelta(days=30)
+
+
+def _unauthorized_refresh_token() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid or expired refresh token",
+    )
+
+
+async def _issue_token_pair(
+    user: User,
+    session: AsyncSession,
+) -> dict[str, str | int]:
+    now = datetime.now(timezone.utc)
+    refresh_token, refresh_token_hash = create_refresh_token()
+    session.add(
+        RefreshToken(
+            user_id=user.id,
+            token_hash=refresh_token_hash,
+            expires_at=now + REFRESH_TOKEN_TTL,
+        )
+    )
+    await session.commit()
+    return {
+        "access_token": encode_jwt(user.id),
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "expires_in": ACCESS_TOKEN_TTL_SECONDS,
+    }
 
 
 async def is_exists(
@@ -43,6 +80,7 @@ class Authentication:
         pwd_hash= hash_password(input.password)
         new_User = User(
             email= input.email,
+            name=input.name,
             password_hash= pwd_hash
         )
         try:
@@ -56,9 +94,9 @@ class Authentication:
             )
 
         await session.refresh(new_User)
-        return {"message":"successfully registered"}
+        return await _issue_token_pair(new_User, session)
 
-    async def login(input:UserCreate,session: AsyncSession):
+    async def login(input: UserLogin, session: AsyncSession):
        user=await get_user_by_email(input.email, session)
        if (
            user is None
@@ -69,16 +107,21 @@ class Authentication:
                status_code=status.HTTP_401_UNAUTHORIZED,
                detail="Incorrect email or password.",
            )
-       jwt=encode_jwt(user.id)
-       return {"access_token": jwt, "token_type": "bearer"}
+       return await _issue_token_pair(user, session)
 
     async def google_login(id_token: str, session: AsyncSession):
-        google_sub, email = await asyncio.to_thread(verify_google_id_token, id_token)
+        google_sub, email, name = await asyncio.to_thread(
+            verify_google_id_token,
+            id_token,
+        )
         user = await session.scalar(
             select(User).where(User.google_sub == google_sub)
         )
         if user is not None:
-            return {"access_token": encode_jwt(user.id), "token_type": "bearer"}
+            if user.name is None and name is not None:
+                user.name = name
+                await session.commit()
+            return await _issue_token_pair(user, session)
 
         existing_email = await session.scalar(
             select(User).where(User.email == email)
@@ -89,7 +132,7 @@ class Authentication:
                 detail="An account with this email already exists; sign in and link Google",
             )
 
-        user = User(email=email, google_sub=google_sub)
+        user = User(email=email, name=name, google_sub=google_sub)
         session.add(user)
         try:
             await session.commit()
@@ -104,14 +147,59 @@ class Authentication:
                     detail="Unable to create Google account",
                 )
 
-        return {"access_token": encode_jwt(user.id), "token_type": "bearer"}
+        return await _issue_token_pair(user, session)
+
+    async def refresh(refresh_token: str, session: AsyncSession):
+        now = datetime.now(timezone.utc)
+        result = await session.execute(
+            update(RefreshToken)
+            .where(
+                RefreshToken.token_hash == hash_refresh_token(refresh_token),
+                RefreshToken.revoked_at.is_(None),
+                RefreshToken.expires_at > now,
+            )
+            .values(revoked_at=now)
+            .returning(RefreshToken.user_id)
+        )
+        user_id = result.scalar_one_or_none()
+        if user_id is None:
+            await session.rollback()
+            raise _unauthorized_refresh_token()
+
+        user = await session.get(User, user_id)
+        if user is None:
+            await session.rollback()
+            raise _unauthorized_refresh_token()
+
+        return await _issue_token_pair(user, session)
+
+    async def logout(refresh_token: str, session: AsyncSession) -> None:
+        await session.execute(
+            update(RefreshToken)
+            .where(
+                RefreshToken.token_hash == hash_refresh_token(refresh_token),
+                RefreshToken.revoked_at.is_(None),
+            )
+            .values(revoked_at=datetime.now(timezone.utc))
+        )
+        await session.commit()
+
+    async def update_name(
+        name: str,
+        user: User,
+        session: AsyncSession,
+    ) -> User:
+        user.name = name
+        await session.commit()
+        await session.refresh(user)
+        return user
 
     async def link_google(
         id_token: str,
         current_user: User,
         session: AsyncSession,
     ):
-        google_sub, _email = await asyncio.to_thread(
+        google_sub, _email, google_name = await asyncio.to_thread(
             verify_google_id_token,
             id_token,
         )
@@ -133,6 +221,8 @@ class Authentication:
             )
 
         current_user.google_sub = google_sub
+        if current_user.name is None and google_name is not None:
+            current_user.name = google_name
         try:
             await session.commit()
         except IntegrityError:

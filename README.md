@@ -47,6 +47,40 @@ The interactive API documentation is available at
 <http://127.0.0.1:8000/docs>, and the OpenAPI schema is at
 <http://127.0.0.1:8000/openapi.json>.
 
+For the mobile team's endpoint guide, see [MOBILE_API.md](./MOBILE_API.md).
+
+## Mobile authentication
+
+`POST /api/v1/register` accepts `email`, `password`, and `name`. Registration,
+password login, and Google login return an access token and a refresh token.
+Send the access token as a bearer token for authenticated API requests.
+
+Access tokens expire after 15 minutes; refresh tokens expire after 30 days.
+Send the refresh token to
+`POST /api/v1/refresh` to rotate it and receive a new token pair. The old
+refresh token becomes invalid after use. Send it to `POST /api/v1/logout` to
+revoke it when signing out. Store refresh tokens in the mobile platform's
+secure storage.
+
+Recipe search/details, reviews, and notifications are registered as separate
+API route groups; existing review and notification URL paths remain unchanged.
+
+Use `PATCH /api/v1/me` with `{"name": "New Name"}` to update the signed-in
+user's display name. `GET /api/v1/recipes/random` returns a random recipe.
+Administrators can send an in-app upgrade notice to all users with
+`POST /api/v1/admin/notifications/broadcast`, using a JSON `title` and
+`message`. This endpoint requires an authenticated user whose `is_admin` field
+is true. To grant the initial admin after migrating, set that field manually
+for a trusted account, for example:
+
+```sql
+UPDATE "user" SET is_admin = TRUE WHERE email = 'admin@example.com';
+```
+
+After an initial admin is set up, admins can promote an existing user by
+calling `POST /api/v1/admin/users/{user_id}/promote` with an admin bearer
+token. The user must first register through `POST /api/v1/register`.
+
 ## Database migrations
 
 With the same environment variables configured in `.env`, apply migrations
