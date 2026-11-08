@@ -1,6 +1,5 @@
 import hashlib
 import secrets
-import secrets
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -42,7 +41,7 @@ def decode_jwt(token: str) -> dict:
         token,
         settings.secret,
         algorithms=["HS256"],
-        options={"require": ["sub", "exp", "type"]},
+        options={"require": ["sub", "exp"]},
     )
 
 

@@ -44,7 +44,7 @@ async def get_current_user(
 
     try:
         payload = decode_jwt(credentials.credentials)
-        if payload.get("type") != "access":
+        if payload.get("type", "access") != "access":
             raise unauthorized
         user_id = UUID(payload["sub"])
     except (jwt.InvalidTokenError, KeyError, TypeError, ValueError):
