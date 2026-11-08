@@ -6,9 +6,6 @@ from app.core.config import settings
 from app.schemas.recipe import RecipeDetails, RecipeIngredient, RecipeSummary
 
 
-BASE_URL = "https://www.themealdb.com/api/json/v1"
-
-
 async def _fetch_meals(endpoint: str, params: dict[str, str]) -> list[dict]:
     if settings.mealdb_api_key is None:
         raise HTTPException(
@@ -19,7 +16,10 @@ async def _fetch_meals(endpoint: str, params: dict[str, str]) -> list[dict]:
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
-                f"{BASE_URL}/{settings.mealdb_api_key}/{endpoint}",
+                (
+                    f"{settings.mealdb_url.rstrip('/')}/"
+                    f"{settings.mealdb_api_key}/{endpoint}"
+                ),
                 params=params,
             )
         response.raise_for_status()

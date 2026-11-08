@@ -37,6 +37,15 @@ class UserRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class AdminUserRead(BaseModel):
+    id: UUID
+    email: EmailStr
+    name: str | None
+    is_admin: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserNameUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
 

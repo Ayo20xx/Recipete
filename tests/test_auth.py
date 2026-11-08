@@ -25,6 +25,7 @@ from app.models.notification import Notification
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.user import UserCreate
+from app.services.admin import promote_user_to_admin
 from app.services.auth import Authentication
 from app.services.recipes import get_random_recipe
 from app.services.user_content import broadcast_notification
@@ -155,3 +156,15 @@ class AuthenticationTokenTests(unittest.IsolatedAsyncioTestCase):
 
             updated_user.is_admin = True
             self.assertIs(await get_admin_user(updated_user), updated_user)
+
+    async def test_existing_admin_can_promote_a_registered_user(self) -> None:
+        async with self.session_factory() as session:
+            user = User(email="promoted@example.com", name="Promoted User")
+            session.add(user)
+            await session.commit()
+
+            promoted_user = await promote_user_to_admin(session, user.id)
+            self.assertTrue(promoted_user.is_admin)
+
+            repeated_promotion = await promote_user_to_admin(session, user.id)
+            self.assertTrue(repeated_promotion.is_admin)

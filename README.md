@@ -77,6 +77,10 @@ for a trusted account, for example:
 UPDATE "user" SET is_admin = TRUE WHERE email = 'admin@example.com';
 ```
 
+After an initial admin is set up, admins can promote an existing user by
+calling `POST /api/v1/admin/users/{user_id}/promote` with an admin bearer
+token. The user must first register through `POST /api/v1/register`.
+
 ## Database migrations
 
 With the same environment variables configured in `.env`, apply migrations
