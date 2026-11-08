@@ -8,7 +8,11 @@ from app.schemas.recipe import (
     RecipeSummary,
     SavedRecipeRead,
 )
-from app.services.recipes import get_recipe_details, search_recipes
+from app.services.recipes import (
+    get_random_recipe,
+    get_recipe_details,
+    search_recipes,
+)
 from app.services.user_content import (
     RecipeProvider,
     list_saved_recipes,
@@ -32,6 +36,11 @@ async def search(
         category=category,
         area=area,
     )
+
+
+@recipes_router.get("/random", response_model=RecipeDetails)
+async def random_recipe():
+    return await get_random_recipe()
 
 
 @recipes_router.get("/{meal_id}", response_model=RecipeDetails)

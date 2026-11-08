@@ -2,15 +2,32 @@ from uuid import UUID
 
 from fastapi import APIRouter, status
 
-from app.api.deps import CurrentUserDep, SessionDep
-from app.schemas.recipe import NotificationInbox
+from app.api.deps import AdminUserDep, CurrentUserDep, SessionDep
+from app.schemas.recipe import (
+    NotificationBroadcastCreate,
+    NotificationBroadcastResult,
+    NotificationInbox,
+)
 from app.services.user_content import (
+    broadcast_notification,
     list_notifications,
     mark_all_notifications_read,
     mark_notification_read,
 )
 
 notifications_router = APIRouter(tags=["notifications"])
+
+
+@notifications_router.post(
+    "/admin/notifications/broadcast",
+    response_model=NotificationBroadcastResult,
+)
+async def broadcast(
+    input: NotificationBroadcastCreate,
+    _admin: AdminUserDep,
+    session: SessionDep,
+):
+    return await broadcast_notification(session, input.title, input.message)
 
 
 @notifications_router.get("/me/notifications", response_model=NotificationInbox)

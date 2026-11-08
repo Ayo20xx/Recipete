@@ -20,10 +20,14 @@ os.environ.update(
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
 
 from app.core.security import decode_jwt
+from app.api.deps import get_admin_user
+from app.models.notification import Notification
 from app.models.refresh_token import RefreshToken
 from app.models.user import User
 from app.schemas.user import UserCreate
 from app.services.auth import Authentication
+from app.services.recipes import get_random_recipe
+from app.services.user_content import broadcast_notification
 
 
 class AuthenticationTokenTests(unittest.IsolatedAsyncioTestCase):
@@ -86,3 +90,68 @@ class AuthenticationTokenTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNotNone(user)
         self.assertEqual(user.name, "Google User")
         self.assertEqual(decode_jwt(tokens["access_token"])["type"], "access")
+
+    async def test_broadcast_creates_a_notice_for_each_user(self) -> None:
+        async with self.session_factory() as session:
+            session.add_all(
+                [
+                    User(email="one@example.com"),
+                    User(email="two@example.com"),
+                ]
+            )
+            await session.commit()
+
+            result = await broadcast_notification(
+                session,
+                "App update",
+                "Please update the app.",
+            )
+            self.assertEqual(result["recipient_count"], 2)
+
+            notices = list(await session.scalars(select(Notification)))
+            self.assertEqual(len(notices), 2)
+            self.assertTrue(all(notice.title == "App update" for notice in notices))
+            self.assertTrue(all(notice.review_id is None for notice in notices))
+
+    async def test_random_recipe_uses_random_provider_result(self) -> None:
+        meal = {
+            "idMeal": "42",
+            "strMeal": "Test Dish",
+            "strMealThumb": None,
+            "strCategory": "Dinner",
+            "strArea": "Test",
+            "strInstructions": "Cook it.",
+            "strSource": None,
+            "strIngredient1": "Rice",
+            "strMeasure1": "1 cup",
+        }
+        with patch(
+            "app.services.recipes._fetch_meals",
+            return_value=[meal],
+        ) as fetch:
+            recipe = await get_random_recipe()
+
+        self.assertEqual(recipe.id, "42")
+        self.assertEqual(recipe.name, "Test Dish")
+        self.assertEqual(recipe.ingredients[0].name, "Rice")
+        fetch.assert_awaited_once_with("random.php", {})
+
+    async def test_name_update_persists_and_admin_guard_rejects_regular_users(self) -> None:
+        async with self.session_factory() as session:
+            user = User(email="profile@example.com", name="Old Name")
+            session.add(user)
+            await session.commit()
+
+            updated_user = await Authentication.update_name(
+                "Updated Name",
+                user,
+                session,
+            )
+            self.assertEqual(updated_user.name, "Updated Name")
+
+            with self.assertRaises(HTTPException) as error:
+                await get_admin_user(updated_user)
+            self.assertEqual(error.exception.status_code, 403)
+
+            updated_user.is_admin = True
+            self.assertIs(await get_admin_user(updated_user), updated_user)

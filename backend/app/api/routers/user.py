@@ -7,6 +7,7 @@ from app.schemas.user import (
     RefreshTokenRequest,
     UserCreate,
     UserLogin,
+    UserNameUpdate,
     UserRead,
 )
 from app.services.auth import Authentication
@@ -31,6 +32,15 @@ async def login(input: UserLogin, session: SessionDep):
 @user_router.get("/me", response_model=UserRead)
 async def me(current_user: CurrentUserDep):
     return current_user
+
+
+@user_router.patch("/me", response_model=UserRead)
+async def update_me(
+    input: UserNameUpdate,
+    current_user: CurrentUserDep,
+    session: SessionDep,
+):
+    return await Authentication.update_name(input.name, current_user, session)
 
 
 @user_router.post("/google", response_model=AuthTokenResponse)

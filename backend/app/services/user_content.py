@@ -277,6 +277,26 @@ async def list_notifications(
     )
 
 
+async def broadcast_notification(
+    session: AsyncSession,
+    title: str,
+    message: str,
+) -> dict[str, int]:
+    user_ids = (
+        await session.execute(select(User.id))
+    ).scalars().all()
+    session.add_all(
+        Notification(
+            user_id=user_id,
+            title=title,
+            message=message,
+        )
+        for user_id in user_ids
+    )
+    await session.commit()
+    return {"recipient_count": len(user_ids)}
+
+
 async def mark_notification_read(
     session: AsyncSession,
     user: User,

@@ -65,6 +65,18 @@ secure storage.
 Recipe search/details, reviews, and notifications are registered as separate
 API route groups; existing review and notification URL paths remain unchanged.
 
+Use `PATCH /api/v1/me` with `{"name": "New Name"}` to update the signed-in
+user's display name. `GET /api/v1/recipes/random` returns a random recipe.
+Administrators can send an in-app upgrade notice to all users with
+`POST /api/v1/admin/notifications/broadcast`, using a JSON `title` and
+`message`. This endpoint requires an authenticated user whose `is_admin` field
+is true. To grant the initial admin after migrating, set that field manually
+for a trusted account, for example:
+
+```sql
+UPDATE "user" SET is_admin = TRUE WHERE email = 'admin@example.com';
+```
+
 ## Database migrations
 
 With the same environment variables configured in `.env`, apply migrations

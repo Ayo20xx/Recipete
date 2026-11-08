@@ -13,6 +13,5 @@ class User(SQLModel, table=True):
         default_factory=lambda: datetime.now(timezone.utc)
     )
     google_sub: str | None = Field(default=None, unique=True, index=True)
-
-    
+    is_admin: bool = Field(default=False)
     

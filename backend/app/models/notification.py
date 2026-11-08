@@ -22,9 +22,15 @@ class Notification(SQLModel, table=True):
         foreign_key="user.id",
         ondelete="SET NULL",
     )
-    review_id: UUID = Field(foreign_key="recipe_review.id", ondelete="CASCADE")
-    provider: str = Field(max_length=32)
-    recipe_id: str = Field(max_length=64)
+    review_id: UUID | None = Field(
+        default=None,
+        foreign_key="recipe_review.id",
+        ondelete="CASCADE",
+    )
+    provider: str | None = Field(default=None, max_length=32)
+    recipe_id: str | None = Field(default=None, max_length=64)
+    title: str | None = Field(default=None, max_length=120)
+    message: str | None = Field(default=None, max_length=1000)
     is_read: bool = Field(default=False, index=True)
     created_at: datetime = Field(
         default_factory=lambda: datetime.now(timezone.utc)

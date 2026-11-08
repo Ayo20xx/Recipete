@@ -37,6 +37,12 @@ class RecipeApiSmokeTests(unittest.TestCase):
         )
         self.assertIn("/api/v1/me/notifications", response.json()["paths"])
         self.assertIn("/api/v1/refresh", response.json()["paths"])
+        self.assertIn("/api/v1/me", response.json()["paths"])
+        self.assertIn("/api/v1/recipes/random", response.json()["paths"])
+        self.assertIn(
+            "/api/v1/admin/notifications/broadcast",
+            response.json()["paths"],
+        )
 
     def test_recipe_search_rejects_empty_query(self) -> None:
         response = self.client.get("/api/v1/recipes/search", params={"query": ""})

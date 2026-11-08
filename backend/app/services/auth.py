@@ -184,6 +184,16 @@ class Authentication:
         )
         await session.commit()
 
+    async def update_name(
+        name: str,
+        user: User,
+        session: AsyncSession,
+    ) -> User:
+        user.name = name
+        await session.commit()
+        await session.refresh(user)
+        return user
+
     async def link_google(
         id_token: str,
         current_user: User,

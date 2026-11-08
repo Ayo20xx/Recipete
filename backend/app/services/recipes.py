@@ -100,7 +100,20 @@ async def get_recipe_details(meal_id: str) -> RecipeDetails:
             detail="Recipe not found",
         )
 
-    meal = meals[0]
+    return _recipe_details_from_meal(meals[0])
+
+
+async def get_random_recipe() -> RecipeDetails:
+    meals = await _fetch_meals("random.php", {})
+    if not meals:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Recipe provider returned no random recipe",
+        )
+    return _recipe_details_from_meal(meals[0])
+
+
+def _recipe_details_from_meal(meal: dict) -> RecipeDetails:
     ingredients = []
     for index in range(1, 21):
         name = meal.get(f"strIngredient{index}")
