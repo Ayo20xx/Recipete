@@ -5,6 +5,8 @@ from sqlmodel import Field, SQLModel
 
 
 class RefreshToken(SQLModel, table=True):
+    __tablename__ = "refresh_token"
+
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: UUID = Field(foreign_key="user.id", index=True, ondelete="CASCADE")
     token_hash: str = Field(unique=True, index=True)

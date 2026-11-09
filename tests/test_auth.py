@@ -45,6 +45,8 @@ class AuthenticationTokenTests(unittest.IsolatedAsyncioTestCase):
         await self.engine.dispose()
 
     async def test_registration_returns_tokens_and_refresh_rotates_once(self) -> None:
+        self.assertEqual(RefreshToken.__tablename__, "refresh_token")
+
         async with self.session_factory() as session:
             tokens = await Authentication.register(
                 UserCreate(
